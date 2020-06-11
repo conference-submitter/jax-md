@@ -109,8 +109,6 @@ class DynamicsTest(jtu.JaxTestCase):
       E_current = energy(R)
       dr_current = np.sum((R - R0) ** 2)
 
-      # NOTE(schsam): We add this to test to make sure we can jit through the
-      # creation of FireDescentState namedtuple.
       @jit
       def three_steps(state):
         return opt_apply(opt_apply(opt_apply(state)))
