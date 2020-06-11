@@ -120,15 +120,12 @@ def pair_correlation(displacement_or_metric, rs, sigma):
   metric = space.canonicalize_displacement_or_metric(displacement_or_metric)
 
   sigma = np.array(sigma, f32)
-  # NOTE(schsam): This seems rather harmless, but possibly something to look at
   rs = np.array(rs + 1e-7, f32)
 
-  # TODO(schsam): Get this working with cell list .
   def compute_fun(R, **dynamic_kwargs):
     _metric = partial(metric, **dynamic_kwargs)
     _metric = space.map_product(_metric)
     dr = _metric(R, R)
-    # TODO(schsam): Clean up.
     dr = np.where(dr > f32(1e-7), dr, f32(1e7))
     dim = R.shape[1]
     exp = np.exp(-f32(0.5) * (dr[:, :, np.newaxis] - rs) ** 2 / sigma ** 2)
