@@ -268,8 +268,6 @@ class SimulateTest(jtu.JaxTestCase):
         if step > 4000 and step % 100 == 0:
           T_list += [quantity.temperature(state.velocity, state.mass)]
 
-      # TODO(schsam): It would be good to check Gaussinity of R and V in the
-      # noninteracting case.
       T_emp = np.mean(np.array(T_list))
       assert np.abs(T_emp - T) < 0.1
       assert state.position.dtype == dtype
