@@ -240,7 +240,6 @@ class NeighborListTest(jtu.JaxTestCase):
          [0.0, 0.0, 7.25]])
     min_length = np.min(np.diag(box_fn(0.)))
     cutoff = f32(1.23)
-    # TODO(schsam): Get cell-list working with anisotropic cell sizes.
     cell_size = cutoff / min_length
 
     displacement, _ = space.periodic_general(box_fn)
