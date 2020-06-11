@@ -59,7 +59,6 @@ def _get_bond_type_parameters(params, bond_type):
 
 def _kwargs_to_bond_parameters(bond_type, kwargs):
   """Extract parameters from keyword arguments."""
-  # NOTE(schsam): We could pull out the species case from the generic case.
   for k, v in kwargs.items():
     if bond_type is not None:
       kwargs[k] = _get_bond_type_parameters(v, bond_type)
@@ -114,7 +113,6 @@ def bond(fn, metric, static_bonds=None, static_bond_types=None, **kwargs):
     Rb = R[bonds[:, 1]]
     _kwargs = merge_dicts(static_kwargs, dynamic_kwargs)
     _kwargs = _kwargs_to_bond_parameters(bond_types, _kwargs)
-    # NOTE(schsam): This pattern is needed due to JAX issue #912. 
     _metric = vmap(partial(metric, **dynamic_kwargs), 0, 0)
     dr = _metric(Ra, Rb)
     return _high_precision_sum(fn(dr, **_kwargs))
@@ -153,7 +151,6 @@ def _get_matrix_parameters(params):
   """Get an NxN parameter matrix from per-particle parameters."""
   if isinstance(params, np.ndarray):
     if len(params.shape) == 1:
-      # NOTE(schsam): get_parameter_matrix only supports additive parameters.
       return 0.5 * (params[:, np.newaxis] + params[np.newaxis, :])
     elif len(params.shape) == 0 or len(params.shape) == 2:
       return params
@@ -168,7 +165,6 @@ def _get_matrix_parameters(params):
 
 def _kwargs_to_parameters(species=None, **kwargs):
   """Extract parameters from keyword arguments."""
-  # NOTE(schsam): We could pull out the species case from the generic case.
   s_kwargs = kwargs
   for k, v in s_kwargs.items():
     if species is None:
@@ -189,9 +185,6 @@ def _diagonal_mask(X):
         ('Diagonal mask can only mask rank-2 or rank-3 tensors. '
          'Found {}.'.format(len(X.shape))))
   N = X.shape[0]
-  # NOTE(schsam): It seems potentially dangerous to set nans to 0 here. However,
-  # masking nans also doesn't seem to work. So it also seems necessary. At the
-  # very least we should do some @ErrorChecking.
   X = np.nan_to_num(X)
   mask = f32(1.0) - np.eye(N, dtype=X.dtype)
   if len(X.shape) == 3:
@@ -272,8 +265,6 @@ def pair(
       _kwargs = merge_dicts(kwargs, dynamic_kwargs)
       _kwargs = _kwargs_to_parameters(species, **_kwargs)
       dr = _metric(R, R)
-      # NOTE(schsam): Currently we place a diagonal mask no matter what function
-      # we are mapping. Should this be an option?
       return _high_precision_sum(
           _diagonal_mask(fn(dr, **_kwargs)),
           axis=reduce_axis,
