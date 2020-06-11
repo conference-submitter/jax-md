@@ -70,8 +70,6 @@ def _cell_dimensions(spatial_dimension, box_size, minimum_cell_size):
   if isinstance(box_size, int) or isinstance(box_size, float):
     box_size = f32(box_size)
 
-  # NOTE(schsam): Should we auto-cast based on box_size? I can't imagine a case
-  # in which the box_size would not be accurately represented by an f32.
   if (isinstance(box_size, np.ndarray) and
       (box_size.dtype == np.int32 or box_size.dtype == np.int64)):
     box_size = f32(box_size)
@@ -147,8 +145,6 @@ def _neighboring_cells(dimension):
 
 
 def _estimate_cell_capacity(R, box_size, cell_size, buffer_size_multiplier):
-  # TODO(schsam): We might want to do something more sophisticated here or at
-  # least expose this constant.
   spatial_dim = R.shape[-1]
   cell_capacity = np.max(count_cell_filling(R, box_size, cell_size))
   return int(cell_capacity * buffer_size_multiplier)
@@ -260,7 +256,6 @@ def cell_list(
     dim = R.shape[1]
 
     if dim != 2 and dim != 3:
-      # NOTE(schsam): Do we want to check this in compute_fn as well?
       raise ValueError(
           'Cell list spatial dimension must be 2 or 3. Found {}'.format(dim))
 
@@ -273,11 +268,6 @@ def cell_list(
 
     # Create cell list data.
     particle_id = lax.iota(np.int64, N)
-    # NOTE(schsam): We use the convention that particles that are successfully,
-    # copied have their true id whereas particles empty slots have id = N.
-    # Then when we copy data back from the grid, copy it to an array of shape
-    # [N + 1, output_dimension] and then truncate it to an array of shape
-    # [N, output_dimension] which ignores the empty slots.
     mask_id = np.ones((N,), np.int64) * N
     cell_R = np.zeros((cell_count * cell_capacity, dim), dtype=R.dtype)
     cell_id = N * np.ones((cell_count * cell_capacity, 1), dtype=i32)
@@ -499,13 +489,6 @@ def neighbor_list(
       cell_value = np.reshape(cell_value, (-1,) + cell_value.shape[-2:])
       return ops.index_update(value, scatter_indices, cell_value)
 
-    # NOTE(schsam): Currently, this makes a verlet list that is larger than
-    # needed since the idx buffer inherets its size from the cell-list. In
-    # three-dimensions this seems to translate into an occupancy of ~70%. We
-    # can make this more efficient by shrinking the verlet list at the cost of
-    # another sort. However, this seems possibly less efficient than just
-    # computing everything.
-
     neighbor_idx = np.zeros((N + 1,) + cell_idx.shape[-2:], np.int32)
     neighbor_idx = copy_values_from_cell(neighbor_idx, cell_idx, idx)
     return neighbor_idx[:-1, :, 0]
@@ -523,7 +506,6 @@ def neighbor_list(
 
     idx = np.where(mask, idx, N)
     argsort = np.argsort(f32(1) - mask, axis=1)
-    # TODO(schsam): Error checking for list exceeding maximum occupancy.
     idx = np.take_along_axis(idx, argsort, axis=1)
 
     return idx, max_occupancy
