@@ -261,7 +261,6 @@ def nvt_nose_hoover(
     F = force(R, t=t, **kwargs)
 
     V = V + dt * F / mass
-    # NOTE(schsam): Do we need to mean subtraction here?
     V = V - np.mean(V, axis=0, keepdims=True)
     KE = quantity.kinetic_energy(V, mass)
     R = shift_fn(R, V * dt_2, t=t, **kwargs)
