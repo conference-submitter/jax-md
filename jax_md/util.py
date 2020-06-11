@@ -35,7 +35,6 @@ f64 = np.float64
 
 def static_cast(*xs):
   """Function to cast a value to the lowest dtype that can express it."""
-  # NOTE(schsam): static_cast is so named because it cannot be jit.
   if xla_bridge.get_backend().platform == 'tpu':
     return (np.array(x, np.float32) for x in xs)
   else:
